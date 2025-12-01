@@ -1,6 +1,10 @@
 <div align="left">
 
-<img src="docs/src/nsefeed-logo.webp" alt="nsefeed" width="400"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/src/nsefeed-logo-dark.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/src/nsefeed-logo-light.jpg">
+  <img src="docs/src/nsefeed-logo-light.jpg" alt="nsefeed" width="400"/>
+</picture>
 
 [![PyPI version](https://badge.fury.io/py/nsefeed.svg)](https://badge.fury.io/py/nsefeed)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -220,7 +224,7 @@ This library is for educational and research purposes. Not affiliated with or en
 
 ---
 
-<div align="center">
+<div align="left">
 
 **Made with ❤️ for the Indian trading community**
 
