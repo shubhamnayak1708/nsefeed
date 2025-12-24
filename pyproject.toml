@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nsefeed"
-version = "0.1.0"
-description = "A modern, yfinance-inspired Python library for NSE India market data"
+version = "1.0.0"
+description = "Minimal, production-ready Python library for ingesting historical NSE India data - Indices, Equity, and Derivatives with yfinance-style API"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Shubham Nayak", email = "shubhamnayaksn1708@gmail.com"}
 ]
 maintainers = [
-    {name = "Your Name", email = "your.email@example.com"}
+    {name = "Shubham Nayak", email = "shubhamnayaksn1708@gmail.com"}
 ]
 keywords = [
     "nse",
@@ -28,10 +28,18 @@ keywords = [
     "sensex",
     "bhavcopy",
     "ohlc",
-    "historical-data"
+    "historical-data",
+    "derivatives",
+    "options",
+    "futures",
+    "capital-market",
+    "yfinance",
+    "data-ingestion",
+    "market-data",
+    "financial-data"
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Financial and Insurance Industry",
     "License :: OSI Approved :: Apache Software License",
@@ -54,31 +62,21 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "pytest-mock>=3.10.0",
     "black>=23.0.0",
     "isort>=5.12.0",
     "mypy>=1.0.0",
     "pylint>=2.17.0",
-    "responses>=0.23.0",
-]
-async = [
-    "aiohttp>=3.8.0",
-]
-progress = [
-    "tqdm>=4.65.0",
 ]
 all = [
-    "nsefeed[dev,async,progress]",
+    "nsefeed[dev]",
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/nsefeed"
-Documentation = "https://github.com/yourusername/nsefeed#readme"
-Repository = "https://github.com/yourusername/nsefeed.git"
-Issues = "https://github.com/yourusername/nsefeed/issues"
-Changelog = "https://github.com/yourusername/nsefeed/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/shubhamnayak1708/nsefeed"
+Documentation = "https://github.com/shubhamnayak1708/nsefeed#readme"
+Repository = "https://github.com/shubhamnayak1708/nsefeed.git"
+Issues = "https://github.com/shubhamnayak1708/nsefeed/issues"
+Changelog = "https://github.com/shubhamnayak1708/nsefeed/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -127,25 +125,3 @@ show_error_codes = true
 [[tool.mypy.overrides]]
 module = ["pandas.*", "requests.*", "dateutil.*"]
 ignore_missing_imports = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_functions = ["test_*"]
-addopts = "-v --tb=short"
-filterwarnings = [
-    "ignore::DeprecationWarning",
-]
-
-[tool.coverage.run]
-source = ["nsefeed"]
-branch = true
-omit = ["tests/*", "*/__pycache__/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise NotImplementedError",
-    "if TYPE_CHECKING:",
-]

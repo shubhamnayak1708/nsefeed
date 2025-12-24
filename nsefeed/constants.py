@@ -22,28 +22,64 @@ NSE_ARCHIVES_URL: Final[str] = "https://archives.nseindia.com"
 NSE_NEW_ARCHIVES_URL: Final[str] = "https://nsearchives.nseindia.com"
 
 # =============================================================================
-# NSE API Endpoints (Unofficial - requires session cookies)
+# NSE API Endpoints (For CSV downloads - Reliable)
 # =============================================================================
 
 NSE_ENDPOINTS: Final[dict[str, str]] = {
     # Homepage - for session initialization
     "home": f"{NSE_BASE_URL}/",
-    # Equity data
-    "quote_equity": f"{NSE_BASE_URL}/api/quote-equity",
-    "trade_info": f"{NSE_BASE_URL}/api/quote-equity",  # with section=trade_info
-    "equity_master": f"{NSE_BASE_URL}/api/equity-master",
+
     # Index data
     "stock_indices": f"{NSE_BASE_URL}/api/equity-stockIndices",
-    "index_names": f"{NSE_BASE_URL}/api/allIndices",
-    # Historical data
-    "historical": f"{NSE_BASE_URL}/api/historical/cm/equity",
-    "chart_data": f"{NSE_BASE_URL}/api/chart-databyindex",
+    "nifty50": f"{NSE_BASE_URL}/api/equity-stockIndices?index=NIFTY%2050",
+
     # Corporate actions
     "corporate_actions": f"{NSE_BASE_URL}/api/corporates-corporateActions",
-    # Market status
-    "market_status": f"{NSE_BASE_URL}/api/marketStatus",
-    # Holiday list
-    "holiday_list": f"{NSE_BASE_URL}/api/holiday-master",
+    
+    # Stock quote
+    "quote_equity": f"{NSE_BASE_URL}/api/quote-equity",
+}
+
+# =============================================================================
+# CSV Download Endpoints (More reliable than JSON APIs)
+# =============================================================================
+
+CSV_ENDPOINTS: Final[dict[str, dict[str, str]]] = {
+    # Equity price, volume, and deliverable data
+    "equity_deliverable": {
+        "url": f"{NSE_BASE_URL}/api/historicalOR/generateSecurityWiseHistoricalData",
+        "origin": f"{NSE_BASE_URL}/report-detail/eq_security",
+    },
+    # Bulk deals
+    "bulk_deals": {
+        "url": f"{NSE_BASE_URL}/api/historicalOR/bulk-block-short-deals",
+        "origin": f"{NSE_BASE_URL}",
+    },
+    # Block deals
+    "block_deals": {
+        "url": f"{NSE_BASE_URL}/api/historicalOR/bulk-block-short-deals",
+        "origin": f"{NSE_BASE_URL}",
+    },
+    # Short selling
+    "short_selling": {
+        "url": f"{NSE_BASE_URL}/api/historicalOR/bulk-block-short-deals",
+        "origin": f"{NSE_BASE_URL}",
+    },
+    # Historical index data
+    "index_history": {
+        "url": f"{NSE_BASE_URL}/api/historical/indicesHistory",
+        "origin": f"{NSE_BASE_URL}/reports-indices-historical-index-data",
+    },
+    # VIX historical data
+    "vix_history": {
+        "url": "https://nsewebsite-staging.nseindia.com/api/historical/vixhistory",
+        "origin": f"{NSE_BASE_URL}/report-detail/eq_security",
+    },
+    # Futures and Options historical
+    "fo_cpv": {
+        "url": f"{NSE_BASE_URL}/api/historical/foCPV",
+        "origin": f"{NSE_BASE_URL}/report-detail/fo_eq_security",
+    },
 }
 
 # =============================================================================
@@ -83,14 +119,21 @@ DEFAULT_HEADERS: Final[dict[str, str]] = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
+        "Chrome/131.0.0.0 Safari/537.36"
     ),
-    "Accept": "application/json, text/plain, */*",
+    "Accept": "*/*",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "Referer": "https://www.nseindia.com/",
+    "Origin": "https://www.nseindia.com",
     "Connection": "keep-alive",
-    "Cache-Control": "no-cache",
-    "Pragma": "no-cache",
+    "DNT": "1",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+    "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
 }
 
 # Headers for archive downloads
@@ -98,12 +141,21 @@ ARCHIVE_HEADERS: Final[dict[str, str]] = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
+        "Chrome/131.0.0.0 Safari/537.36"
     ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "Referer": "https://www.nseindia.com/",
     "Connection": "keep-alive",
+    "DNT": "1",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
 }
 
 # Rotating User-Agents for better resilience
@@ -111,26 +163,26 @@ USER_AGENTS: Final[list[str]] = [
     (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
+        "Chrome/131.0.0.0 Safari/537.36"
     ),
     (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
+        "Chrome/131.0.0.0 Safari/537.36"
     ),
     (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) "
-        "Gecko/20100101 Firefox/121.0"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) "
+        "Gecko/20100101 Firefox/132.0"
     ),
     (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/605.1.15 (KHTML, like Gecko) "
-        "Version/17.2 Safari/605.1.15"
+        "Version/18.1 Safari/605.1.15"
     ),
     (
         "Mozilla/5.0 (X11; Linux x86_64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
+        "Chrome/131.0.0.0 Safari/537.36"
     ),
 ]
 
@@ -215,17 +267,35 @@ PRIMARY_SERIES: Final[list[str]] = ["EQ", "BE", "BZ"]
 # =============================================================================
 
 PERIOD_DAYS: Final[dict[str, int]] = {
+    # Lowercase (yfinance-style, for Ticker API compatibility)
     "1d": 1,
     "5d": 5,
+    "1w": 7,
     "1mo": 30,
+    "1m": 30,  # Alias for 1mo
     "3mo": 90,
+    "3m": 90,  # Alias for 3mo
     "6mo": 180,
+    "6m": 180,  # Alias for 6mo
     "1y": 365,
     "2y": 730,
     "5y": 1825,
     "10y": 3650,
     "ytd": -1,  # Special handling for year-to-date
     "max": -2,  # Special handling for maximum available
+
+    # Uppercase aliases (for equity/derivatives modules)
+    "1D": 1,
+    "1W": 7,
+    "1M": 30,
+    "3M": 90,
+    "6M": 180,
+    "1Y": 365,
+    "2Y": 730,
+    "5Y": 1825,
+    "10Y": 3650,
+    "YTD": -1,
+    "MAX": -2,
 }
 
 # =============================================================================
@@ -301,4 +371,72 @@ OUTPUT_COLUMNS: Final[list[str]] = [
     "volume",
     "value",
     "trades",
+]
+
+# =============================================================================
+# Data Column Definitions (nselib-style)
+# =============================================================================
+
+# Price, volume, and deliverable position data columns
+PRICE_VOLUME_DELIVERABLE_COLUMNS: Final[list[str]] = [
+    'Symbol', 'Series', 'Date', 'PrevClose', 'OpenPrice', 'HighPrice',
+    'LowPrice', 'LastPrice', 'ClosePrice', 'AveragePrice', 'TotalTradedQuantity',
+    'TurnoverInRs', 'No.ofTrades', 'DeliverableQty', '%DlyQttoTradedQty'
+]
+
+# Price and volume data columns (no delivery)
+PRICE_VOLUME_COLUMNS: Final[list[str]] = [
+    'Symbol', 'Series', 'Date', 'PrevClose', 'OpenPrice', 'HighPrice',
+    'LowPrice', 'LastPrice', 'ClosePrice', 'AveragePrice',
+    'TotalTradedQuantity', 'Turnover', 'No.ofTrades'
+]
+
+# Deliverable data columns only
+DELIVERABLE_COLUMNS: Final[list[str]] = [
+    'Symbol', 'Series', 'Date', 'TradedQty', 'DeliverableQty', '%DlyQttoTradedQty'
+]
+
+# Bulk deal data columns
+BULK_DEAL_COLUMNS: Final[list[str]] = [
+    'Date', 'Symbol', 'SecurityName', 'ClientName', 'Buy/Sell', 'QuantityTraded',
+    'TradePrice/Wght.Avg.Price', 'Remarks'
+]
+
+# Block deals data columns
+BLOCK_DEAL_COLUMNS: Final[list[str]] = [
+    'Date', 'Symbol', 'SecurityName', 'ClientName', 'Buy/Sell', 'QuantityTraded',
+    'TradePrice/Wght.Avg.Price', 'Remarks'
+]
+
+# Short selling data columns
+SHORT_SELLING_COLUMNS: Final[list[str]] = [
+    'Date', 'Symbol', 'SecurityName', 'Quantity'
+]
+
+# Future price volume data columns
+FUTURE_PRICE_VOLUME_COLUMNS: Final[list[str]] = [
+    'TIMESTAMP', 'INSTRUMENT', 'SYMBOL', 'EXPIRY_DT', 'STRIKE_PRICE', 'OPTION_TYPE', 'MARKET_TYPE',
+    'OPENING_PRICE', 'TRADE_HIGH_PRICE', 'TRADE_LOW_PRICE', 'CLOSING_PRICE',
+    'LAST_TRADED_PRICE', 'PREV_CLS', 'SETTLE_PRICE', 'TOT_TRADED_QTY', 'TOT_TRADED_VAL',
+    'OPEN_INT', 'CHANGE_IN_OI', 'MARKET_LOT', 'UNDERLYING_VALUE'
+]
+
+# India VIX data columns
+INDIA_VIX_COLUMNS: Final[list[str]] = [
+    'TIMESTAMP', 'INDEX_NAME', 'OPEN_INDEX_VAL', 'CLOSE_INDEX_VAL', 'HIGH_INDEX_VAL',
+    'LOW_INDEX_VAL', 'PREV_CLOSE', 'VIX_PTS_CHG', 'VIX_PERC_CHG'
+]
+
+# Index data columns
+INDEX_DATA_COLUMNS: Final[list[str]] = [
+    'TIMESTAMP', 'INDEX_NAME', 'OPEN_INDEX_VAL', 'HIGH_INDEX_VAL', 'CLOSE_INDEX_VAL',
+    'LOW_INDEX_VAL', 'TRADED_QTY', 'TURN_OVER'
+]
+
+# =============================================================================
+# NSE Index Names
+# =============================================================================
+
+INDICES_LIST: Final[list[str]] = [
+    'NIFTY', 'FINNIFTY', 'BANKNIFTY', 'MIDCPNIFTY'
 ]

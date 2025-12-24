@@ -14,10 +14,11 @@ Example output:
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from datetime import datetime
 from typing import Optional
+
+from . import config as cfg
 
 # Module-level logger instance
 _logger: Optional[logging.Logger] = None
@@ -77,8 +78,8 @@ def get_logger(name: str = "nsefeed") -> logging.Logger:
     # Create logger
     logger = logging.getLogger(name)
 
-    # Get log level from environment
-    log_level_str = os.environ.get("NSEFEED_LOG_LEVEL", "INFO").upper()
+    # Get log level from config
+    log_level_str = cfg.LOG_LEVEL
     log_level = getattr(logging, log_level_str, logging.INFO)
     logger.setLevel(log_level)
 
@@ -89,20 +90,19 @@ def get_logger(name: str = "nsefeed") -> logging.Logger:
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(log_level)
 
-    # Check color preference
-    use_colors = os.environ.get("NSEFEED_LOG_COLOR", "auto").lower()
-    if use_colors == "false" or use_colors == "0":
+    # Check color preference from config
+    if cfg.LOG_COLOR is False:
         console_formatter = NSEFeedFormatter(use_colors=False)
-    elif use_colors == "true" or use_colors == "1":
+    elif cfg.LOG_COLOR is True:
         console_formatter = NSEFeedFormatter(use_colors=True)
-    else:
+    else:  # "auto"
         console_formatter = NSEFeedFormatter(use_colors=True)  # Auto-detect
 
     console_handler.setFormatter(console_formatter)
     logger.addHandler(console_handler)
 
     # File handler (optional)
-    log_file = os.environ.get("NSEFEED_LOG_FILE")
+    log_file = cfg.LOG_FILE
     if log_file:
         try:
             file_handler = logging.FileHandler(log_file, encoding="utf-8")

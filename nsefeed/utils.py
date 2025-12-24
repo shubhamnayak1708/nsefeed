@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, date, timedelta
-from typing import Tuple
+from typing import Any, Tuple
 
 import pandas as pd
 from dateutil.parser import parse as dateutil_parse
@@ -379,7 +379,13 @@ def aggregate_to_weekly(df: pd.DataFrame) -> pd.DataFrame:
     if not isinstance(df.index, pd.DatetimeIndex):
         if "date" in df.columns:
             df = df.set_index("date")
-            df.index = pd.to_datetime(df.index)
+            df.index = pd.to_datetime(df.index, errors='coerce')
+
+    # Drop rows with NaT (invalid dates) in index
+    df = df[df.index.notna()]
+
+    if df.empty:
+        return df
 
     # Resample to weekly (week ending Friday)
     weekly = df.resample("W-FRI").agg({
@@ -416,7 +422,13 @@ def aggregate_to_monthly(df: pd.DataFrame) -> pd.DataFrame:
     if not isinstance(df.index, pd.DatetimeIndex):
         if "date" in df.columns:
             df = df.set_index("date")
-            df.index = pd.to_datetime(df.index)
+            df.index = pd.to_datetime(df.index, errors='coerce')
+
+    # Drop rows with NaT (invalid dates) in index
+    df = df[df.index.notna()]
+
+    if df.empty:
+        return df
 
     # Resample to monthly
     monthly = df.resample("ME").agg({
@@ -434,3 +446,423 @@ def aggregate_to_monthly(df: pd.DataFrame) -> pd.DataFrame:
         monthly["trades"] = df["trades"].resample("ME").sum()
 
     return monthly
+
+
+def parse_nse_response_to_dataframe(data: Any) -> pd.DataFrame:
+    """
+    Parse NSE API response to DataFrame.
+
+    Handles multiple response formats from NSE APIs:
+    - Direct list: [{"col1": "val1"}, {"col2": "val2"}]
+    - Dict with data key: {"data": [...], "metadata": {...}}
+    - Dict with other structure
+
+    Args:
+        data: Response data from NSE API
+
+    Returns:
+        DataFrame with parsed data, or empty DataFrame if parsing fails
+    """
+    if data is None:
+        return pd.DataFrame()
+
+    # Handle direct list
+    if isinstance(data, list):
+        if len(data) == 0:
+            return pd.DataFrame()
+        return pd.DataFrame(data)
+
+    # Handle dict with 'data' key
+    if isinstance(data, dict):
+        if 'data' in data:
+            if isinstance(data['data'], list):
+                return pd.DataFrame(data['data'])
+        # Try direct dict conversion
+        try:
+            return pd.DataFrame([data])
+        except (ValueError, TypeError):
+            return pd.DataFrame()
+
+    return pd.DataFrame()
+
+
+def parse_nse_response_to_list(data: Any, key: str = 'symbol') -> list[str]:
+    """
+    Parse NSE API response to list of values.
+
+    Extracts a specific key (default: 'symbol') from NSE API response.
+
+    Args:
+        data: Response data from NSE API
+        key: Key to extract from each item (default: 'symbol')
+
+    Returns:
+        List of values, or empty list if parsing fails
+    """
+    if data is None:
+        return []
+
+    result = []
+
+    # Handle direct list
+    if isinstance(data, list):
+        for item in data:
+            if isinstance(item, dict) and key in item:
+                result.append(item[key])
+        return result
+
+    # Handle dict with 'data' key
+    if isinstance(data, dict) and 'data' in data:
+        if isinstance(data['data'], list):
+            for item in data['data']:
+                if isinstance(item, dict) and key in item:
+                    result.append(item[key])
+            return result
+
+    return []
+
+
+# =============================================================================
+# nselib-style Utility Functions
+# =============================================================================
+
+def cleaning_nse_symbol(symbol: str) -> str:
+    """
+    Clean and normalize NSE symbol (nselib-style).
+
+    Args:
+        symbol: Raw symbol string
+
+    Returns:
+        Cleaned and uppercase symbol
+
+    Example:
+        >>> cleaning_nse_symbol('  reliance  ')
+        'RELIANCE'
+        >>> cleaning_nse_symbol('m&m')
+        'M&M'
+    """
+    if not symbol:
+        raise NSEInvalidSymbolError(symbol, "Symbol cannot be empty")
+
+    # Strip whitespace and convert to uppercase
+    symbol = symbol.strip().upper()
+
+    # Replace common variations
+    symbol = symbol.replace(' ', '')  # Remove internal spaces
+
+    return validate_symbol(symbol)
+
+
+def cleaning_column_name(columns: Any) -> list[str]:
+    """
+    Clean column names from NSE data (nselib-style).
+
+    Removes special characters and standardizes column names.
+
+    Args:
+        columns: Column names (list, Index, or Series)
+
+    Returns:
+        List of cleaned column names
+
+    Example:
+        >>> cleaning_column_name(['Symbol ', ' Date', 'OPEN PRICE'])
+        ['Symbol', 'Date', 'OPENPRICE']
+    """
+    if isinstance(columns, (list, pd.Index, pd.Series)):
+        cleaned = []
+        for col in columns:
+            # Convert to string and clean
+            col_str = str(col).strip()
+            # Remove special chars except dot and underscore
+            col_str = col_str.replace(' ', '')
+            cleaned.append(col_str)
+        return cleaned
+    return [str(columns)]
+
+
+def validate_date_param(
+    from_date: str | date | None = None,
+    to_date: str | date | None = None,
+    period: str | None = None,
+) -> None:
+    """
+    Validate date parameters (nselib-style).
+
+    Ensures that either (from_date + to_date) OR period is provided, not both.
+
+    Args:
+        from_date: Start date
+        to_date: End date
+        period: Period string ('1D', '1W', '1M', '3M', '6M', '1Y')
+
+    Raises:
+        NSEInvalidDateError: If parameters are invalid
+
+    Example:
+        >>> validate_date_param(from_date='01-01-2024', to_date='31-01-2024')  # OK
+        >>> validate_date_param(period='1M')  # OK
+        >>> validate_date_param(from_date='01-01-2024', period='1M')  # ERROR
+    """
+    has_dates = from_date is not None or to_date is not None
+    has_period = period is not None
+
+    if not has_dates and not has_period:
+        raise NSEInvalidDateError(
+            "Either provide (from_date, to_date) or period",
+            details="Example: from_date='01-01-2024', to_date='31-01-2024' OR period='1M'"
+        )
+
+    if has_dates and has_period:
+        raise NSEInvalidDateError(
+            "Cannot provide both (from_date, to_date) and period",
+            details="Choose either date range or period, not both"
+        )
+
+    # If dates provided, both must be provided
+    if has_dates and (from_date is None or to_date is None):
+        raise NSEInvalidDateError(
+            "Both from_date and to_date must be provided",
+            details="If using dates, provide both from_date and to_date"
+        )
+
+    # Validate period format (case-insensitive)
+    if has_period:
+        valid_periods = ['1D', '1W', '1M', '3M', '6M', '1Y', '2Y', '5Y', '10Y']
+        # Normalize to uppercase for comparison
+        period_upper = period.upper() if isinstance(period, str) else period
+        if period_upper not in valid_periods:
+            raise NSEInvalidDateError(
+                f"Invalid period: '{period}'",
+                details=f"Valid periods: {', '.join(valid_periods)} (case-insensitive)"
+            )
+
+
+def derive_from_and_to_date(
+    from_date: str | date | None = None,
+    to_date: str | date | None = None,
+    period: str | None = None,
+) -> tuple[str, str]:
+    """
+    Derive from_date and to_date from period or date range (nselib-style).
+
+    Args:
+        from_date: Start date (DD-MM-YYYY or date object)
+        to_date: End date (DD-MM-YYYY or date object)
+        period: Period string ('1D', '1W', '1M', '3M', '6M', '1Y')
+
+    Returns:
+        Tuple of (from_date_str, to_date_str) in DD-MM-YYYY format
+
+    Example:
+        >>> derive_from_and_to_date(period='1M')
+        ('01-11-2024', '01-12-2024')  # Approximate
+        >>> derive_from_and_to_date(from_date='01-01-2024', to_date='31-01-2024')
+        ('01-01-2024', '31-01-2024')
+    """
+    # If period provided, calculate dates
+    if period:
+        # Normalize period to uppercase for consistency
+        period = period.upper() if isinstance(period, str) else period
+
+        end_date = date.today()
+
+        # Map periods to days/months
+        period_map = {
+            '1D': timedelta(days=1),
+            '1W': timedelta(weeks=1),
+            '1M': relativedelta(months=1),
+            '3M': relativedelta(months=3),
+            '6M': relativedelta(months=6),
+            '1Y': relativedelta(years=1),
+            '2Y': relativedelta(years=2),
+            '5Y': relativedelta(years=5),
+            '10Y': relativedelta(years=10),
+        }
+
+        delta = period_map.get(period)
+        if delta is None:
+            raise NSEInvalidDateError(f"Unsupported period: {period}")
+
+        if isinstance(delta, relativedelta):
+            start_date = end_date - delta
+        else:
+            start_date = end_date - delta
+
+        # Format as DD-MM-YYYY
+        from_date_str = start_date.strftime('%d-%m-%Y')
+        to_date_str = end_date.strftime('%d-%m-%Y')
+
+        return from_date_str, to_date_str
+
+    # If dates provided, normalize them
+    if from_date and to_date:
+        # Parse dates if string
+        if isinstance(from_date, str):
+            # Try DD-MM-YYYY format first
+            try:
+                from_dt = datetime.strptime(from_date, '%d-%m-%Y').date()
+            except ValueError:
+                from_dt = parse_date(from_date)
+        else:
+            from_dt = from_date if isinstance(from_date, date) else from_date.date()
+
+        if isinstance(to_date, str):
+            try:
+                to_dt = datetime.strptime(to_date, '%d-%m-%Y').date()
+            except ValueError:
+                to_dt = parse_date(to_date)
+        else:
+            to_dt = to_date if isinstance(to_date, date) else to_date.date()
+
+        # Validate and return in DD-MM-YYYY format
+        from_dt, to_dt = validate_date_range(from_dt, to_dt, allow_future=False)
+
+        return from_dt.strftime('%d-%m-%Y'), to_dt.strftime('%d-%m-%Y')
+
+    raise NSEInvalidDateError("Must provide either period or from_date/to_date")
+
+
+def convert_numeric_columns(
+    df: pd.DataFrame,
+    columns: list[str],
+) -> pd.DataFrame:
+    """
+    Convert string columns with commas to numeric (nselib-style).
+
+    NSE data often has numbers formatted with commas (e.g., "1,234,567").
+    This function cleans and converts them to proper numeric types.
+
+    Args:
+        df: DataFrame to convert
+        columns: List of column names to convert
+
+    Returns:
+        DataFrame with numeric columns
+
+    Example:
+        >>> df = pd.DataFrame({'Volume': ['1,234,567', '2,345,678']})
+        >>> df = convert_numeric_columns(df, ['Volume'])
+        >>> df['Volume'].dtype
+        dtype('int64')
+    """
+    if df.empty:
+        return df
+
+    df = df.copy()
+
+    for col in columns:
+        if col in df.columns:
+            # Remove commas and convert to numeric
+            df[col] = pd.to_numeric(
+                df[col].astype(str).str.replace(',', ''),
+                errors='coerce'
+            )
+
+    return df
+
+
+def chunk_date_range(
+    start_date: date,
+    end_date: date,
+    chunk_days: int = 365,
+) -> list[tuple[date, date]]:
+    """
+    Split a date range into chunks (nselib-style).
+
+    NSE APIs often have limits on date range (e.g., max 365 days).
+    This function splits large ranges into manageable chunks.
+
+    Args:
+        start_date: Start date
+        end_date: End date
+        chunk_days: Maximum days per chunk (default: 365)
+
+    Returns:
+        List of (chunk_start, chunk_end) tuples
+
+    Example:
+        >>> start = date(2023, 1, 1)
+        >>> end = date(2024, 6, 1)
+        >>> chunks = chunk_date_range(start, end, chunk_days=365)
+        >>> len(chunks)
+        2
+    """
+    chunks = []
+    current_start = start_date
+
+    while current_start <= end_date:
+        # Calculate chunk end (min of chunk_days ahead or end_date)
+        chunk_end = min(
+            current_start + timedelta(days=chunk_days - 1),
+            end_date
+        )
+
+        chunks.append((current_start, chunk_end))
+
+        # Move to next chunk
+        current_start = chunk_end + timedelta(days=1)
+
+    return chunks
+
+
+def derive_dates(
+    from_date: str | date | None = None,
+    to_date: str | date | None = None,
+    period: str | None = None,
+) -> tuple[date, date]:
+    """
+    Derive from_date and to_date as date objects (nselib-style).
+    
+    Similar to derive_from_and_to_date but returns date objects instead of strings.
+    Handles '1M', '1Y' style periods.
+    """
+    if period:
+        end_date = date.today()
+
+        # Map periods to days/months (same as derive_from_and_to_date)
+        period_map = {
+            '1D': timedelta(days=1),
+            '1W': timedelta(weeks=1),
+            '1M': relativedelta(months=1),
+            '3M': relativedelta(months=3),
+            '6M': relativedelta(months=6),
+            '1Y': relativedelta(years=1),
+            '2Y': relativedelta(years=2),
+            '5Y': relativedelta(years=5),
+            '10Y': relativedelta(years=10),
+        }
+
+        delta = period_map.get(period)
+        if delta is None:
+            # Try lowercase lookup if uppercase failed (fallback)
+            delta = period_map.get(period.upper())
+            
+        if delta is None:
+             # Try PERIOD_DAYS for compatibility
+            try:
+                # period_to_dates returns (start, end)
+                return period_to_dates(period)
+            except NSEInvalidDateError:
+                raise NSEInvalidDateError(f"Unsupported period: {period}")
+
+        start_date = end_date - delta
+        return start_date, end_date
+
+    if from_date and to_date:
+        # Parse if strings
+        if isinstance(from_date, str):
+            from_dt = parse_date(from_date)
+        else:
+            from_dt = from_date.date() if isinstance(from_date, datetime) else from_date
+
+        if isinstance(to_date, str):
+            to_dt = parse_date(to_date)
+        else:
+            to_dt = to_date.date() if isinstance(to_date, datetime) else to_date
+
+        # Validate
+        return validate_date_range(from_dt, to_dt, allow_future=False)
+
+    raise NSEInvalidDateError("Must provide either period or from_date/to_date")

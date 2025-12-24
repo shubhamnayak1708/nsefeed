@@ -220,7 +220,10 @@ class BhavCopyScraper:
         """
         # Parse date
         if isinstance(trade_date, str):
-            trade_date = parse_date(trade_date)
+            parsed = parse_date(trade_date)
+            if parsed is None:
+                raise NSEDataNotFoundError(f"Invalid date format: {trade_date}")
+            trade_date = parsed
 
         # Check if it's a trading day
         if not is_trading_day(trade_date):
@@ -289,9 +292,15 @@ class BhavCopyScraper:
 
         # Parse dates
         if isinstance(start_date, str):
-            start_date = parse_date(start_date)
+            parsed = parse_date(start_date)
+            if parsed is None:
+                raise NSEDataNotFoundError(f"Invalid start date format: {start_date}")
+            start_date = parsed
         if isinstance(end_date, str):
-            end_date = parse_date(end_date)
+            parsed = parse_date(end_date)
+            if parsed is None:
+                raise NSEDataNotFoundError(f"Invalid end date format: {end_date}")
+            end_date = parsed
 
         # Validate date range
         start_date, end_date = validate_date_range(start_date, end_date)
@@ -388,9 +397,15 @@ class BhavCopyScraper:
 
         # Parse dates
         if isinstance(start_date, str):
-            start_date = parse_date(start_date)
+            parsed = parse_date(start_date)
+            if parsed is None:
+                raise NSEDataNotFoundError(f"Invalid start date format: {start_date}")
+            start_date = parsed
         if isinstance(end_date, str):
-            end_date = parse_date(end_date)
+            parsed = parse_date(end_date)
+            if parsed is None:
+                raise NSEDataNotFoundError(f"Invalid end date format: {end_date}")
+            end_date = parsed
 
         # Validate date range
         start_date, end_date = validate_date_range(start_date, end_date)
@@ -455,9 +470,15 @@ class BhavCopyScraper:
         """
         # Parse dates
         if isinstance(start_date, str):
-            start_date = parse_date(start_date)
+            parsed = parse_date(start_date)
+            if parsed is None:
+                raise NSEDataNotFoundError(f"Invalid start date format: {start_date}")
+            start_date = parsed
         if isinstance(end_date, str):
-            end_date = parse_date(end_date)
+            parsed = parse_date(end_date)
+            if parsed is None:
+                raise NSEDataNotFoundError(f"Invalid end date format: {end_date}")
+            end_date = parsed
 
         available = []
         current = start_date

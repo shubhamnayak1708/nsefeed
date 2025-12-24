@@ -8,10 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Index class for NIFTY 50, NIFTY BANK support
+- Historical index OHLC data (alternative data sources)
+- Historical India VIX data (alternative data sources)
 - Live data scraper
 - Corporate actions (dividends, splits, bonuses)
 - Async bulk downloads
+
+## [1.0.0] - 2024-12-24
+
+### Added
+- **Complete Production Release**
+  - Clean, minimal codebase focused on reliable NSE data
+  - yfinance-style Ticker API
+  - Comprehensive equity, derivatives, and indices modules
+  - Professional error handling and logging
+
+### Changed
+- Removed test infrastructure (available in dev branch)
+- Removed environment file dependencies (optional env vars only)
+- Streamlined dependencies (3 core: requests, pandas, python-dateutil)
+
+### Known Limitations
+- `index_data()` and `india_vix_data()` temporarily unavailable due to NSE API deprecation
+- Functions raise `NotImplementedError` with helpful workaround suggestions
+- `constituent_stock_list()` and `index_list()` work reliably
 
 ## [0.1.0] - 2024-12-01
 

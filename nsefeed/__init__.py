@@ -1,31 +1,45 @@
 """
-nsefeed - A modern, yfinance-inspired Python library for NSE India market data.
+nsefeed - Minimal, production-ready Python library for NSE India historical data.
 
-This library provides a clean, intuitive interface for accessing NSE
-equities, indices, and market data with proper error handling, caching,
-and data validation.
+This library provides reliable access to NSE India historical data including:
+- Indices (NIFTY 50, NIFTY Bank, sectoral indices, etc.)
+- Equity (price/volume/deliverable data, bulk/block deals)
+- Derivatives (futures, options, F&O bhav copy)
+
+Designed following nselib's clean structure with yfinance-style Ticker API.
+Focus on CSV-based historical data (not live market data).
 
 Basic Usage:
     >>> import nsefeed as nf
 
-    # Fetch historical data (yfinance-style API)
+    # Ticker API (yfinance-style)
     >>> reliance = nf.Ticker("RELIANCE")
     >>> df = reliance.history(period="1mo")
     >>> print(df.head())
 
-    # Get company info
-    >>> print(reliance.info)
-
     # Download multiple tickers
     >>> data = nf.download(["RELIANCE", "TCS", "INFY"], period="1mo")
 
+    # Indices data
+    >>> df = nf.indices.index_data("NIFTY 50", period="1mo")
+    >>> vix = nf.indices.india_vix_data(period="1mo")
+    >>> stocks = nf.indices.constituent_stock_list("BroadMarketIndices", "Nifty 50")
+
+    # Equity data
+    >>> df = nf.equity.get_price_volume_and_deliverable_position_data("RELIANCE", period="1mo")
+    >>> bulk = nf.equity.get_bulk_deal_data(period="1d")
+
+    # Derivatives data
+    >>> df = nf.derivatives.get_future_price_volume_data("NIFTY", "FUTIDX", period="1mo")
+    >>> bhav = nf.derivatives.get_fno_bhav_copy("01-12-2024")
+
 Features:
-    - yfinance-inspired API design
-    - Historical OHLC data from NSE bhav copies
-    - SQLite caching to reduce server load
-    - Rate limiting to respect NSE servers
-    - Professional logging with timestamps
-    - Comprehensive error handling
+    - CSV-based reliable historical data
+    - yfinance-inspired Ticker API
+    - nselib-inspired modular structure
+    - SQLite caching
+    - Rate limiting
+    - Type hints for IDE support
 
 For more information, visit:
     https://github.com/yourusername/nsefeed
@@ -33,8 +47,8 @@ For more information, visit:
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
-__author__ = "Your Name"
+__version__ = "1.0.0"
+__author__ = "Shubham Nayak"
 __license__ = "Apache-2.0"
 
 # Core classes
@@ -61,13 +75,18 @@ from .exceptions import (
     NSEParseError,
 )
 
+# Market data modules
+from . import indices
+from . import equity
+from . import derivatives
+
 # Public API
 __all__ = [
     # Version
     "__version__",
     # Core classes
     "Ticker",
-    "Index",  # Will be added in Phase 2
+    "Index",
     # Functions
     "download",
     "clear_cache",
@@ -85,6 +104,10 @@ __all__ = [
     "NSESessionError",
     "NSECacheError",
     "NSEParseError",
+    # Market modules
+    "indices",
+    "equity",
+    "derivatives",
 ]
 
 

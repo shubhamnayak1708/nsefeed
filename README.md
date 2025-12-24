@@ -1,233 +1,214 @@
-<div align="left">
+# nsefeed
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/src/nsefeed-logo-dark.jpg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/src/nsefeed-logo-light.jpg">
-  <img src="docs/src/nsefeed-logo-light.jpg" alt="nsefeed" width="400"/>
-</picture>
+**Minimal, production-ready Python library for NSE India historical data**
 
-[![PyPI version](https://badge.fury.io/py/nsefeed.svg)](https://badge.fury.io/py/nsefeed)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-under%20development-yellow.svg)]()
 
-A modern Python library for NSE India market data with yfinance-inspired API design.
-
-[Installation](#installation) | [Quick Start](#quick-start) | [Examples](#examples) | [API Reference](#api-reference)
-
-</div>
+A reliable NSE India API wrapper focused on historical data, inspired by [nselib](https://github.com/RuchiTanmay/nselib)'s clean structure and [yfinance](https://github.com/ranaroussi/yfinance)'s intuitive API design.
 
 ---
 
 ## ✨ Features
 
-- **yfinance-style API** - Familiar interface for Python developers
-- **Historical OHLCV Data** - Official NSE bhav copies with SQLite caching
-- **Comprehensive Coverage** - Capital Market, Derivatives, and Debt modules
-- **Type Hints** - Full type coverage for IDE support
-- **Production Ready** - Rate limiting, error handling, and session management
+- **yfinance-style Ticker API** - Familiar, intuitive interface
+- **Reliable CSV-based data** - Historical data from NSE archives (95%+ uptime)
+- **Clean modular structure** - Following nselib's proven pattern
+- **Comprehensive coverage** - Indices, Equity, and Derivatives historical data
+- **Production-ready** - Caching, rate limiting, proper error handling
+- **Type hints** - Full IDE support with type annotations
 
 ## 📦 Installation
 
 ```bash
 pip install nsefeed
-
-# With .env file support
-pip install nsefeed[dotenv]
 ```
 
 ## 🚀 Quick Start
 
+### Ticker API (yfinance-style)
+
 ```python
 import nsefeed as nf
 
-# Fetch historical data (yfinance-style)
+# Fetch historical data for a stock
 ticker = nf.Ticker("RELIANCE")
-df = ticker.history(period="1mo")
+df = ticker.history(period="1M")
 print(df.head())
 
 # Download multiple tickers
-data = nf.download(["RELIANCE", "TCS", "INFY"], period="1mo")
+data = nf.download(["RELIANCE", "TCS", "INFY"], period="1M")
 ```
 
-## 📊 Usage Examples
-
-### Historical Data
+### Indices Module
 
 ```python
 import nsefeed as nf
 
-ticker = nf.Ticker("RELIANCE")
+# Get index constituent stocks (WORKING)
+stocks = nf.indices.constituent_stock_list("BroadMarketIndices", "Nifty 50")
 
-# Different periods and intervals
-df = ticker.history(period="1mo")           # 1 month daily
-df = ticker.history(period="1y", interval="1wk")  # 1 year weekly
-df = ticker.history(start="2025-01-01", end="2025-12-01")  # Custom range
+# Get list of all indices in a category (WORKING)
+indices = nf.indices.index_list("SectoralIndices")
 
-# DataFrame columns: open, high, low, close, volume, value, trades
+# Historical index OHLC data (UNDER DEVELOPMENT - see limitations below)
+# df = nf.indices.index_data("NIFTY 50", period="1M")  # Currently unavailable
+# vix = nf.indices.india_vix_data(period="1M")  # Currently unavailable
 ```
 
-### Batch Download
+### Equity Module
 
 ```python
 import nsefeed as nf
 
-# Download multiple stocks
-stocks = ["RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK"]
-data = nf.download(stocks, period="1mo")
+# Get price, volume, and deliverable position data
+df = nf.equity.get_price_volume_and_deliverable_position_data(
+    "RELIANCE", period="1M"
+)
 
-for symbol, df in data.items():
-    print(f"{symbol}: Latest close Rs.{df['close'].iloc[-1]:.2f}")
+# Get bulk deals
+bulk = nf.equity.get_bulk_deal_data(period="1D")
+
+# Get block deals
+block = nf.equity.get_block_deals_data(period="1D")
+
+# Get short selling data
+short = nf.equity.get_short_selling_data(period="1D")
 ```
 
-### Portfolio Analysis
+### Derivatives Module
 
 ```python
 import nsefeed as nf
 
-portfolio = {"RELIANCE": 100, "TCS": 50, "HDFCBANK": 75}
-data = nf.download(list(portfolio.keys()), period="1mo")
+# Get futures data
+futures = nf.derivatives.get_future_price_volume_data(
+    "NIFTY", "FUTIDX", period="1M"
+)
 
-total_value = sum(data[s]['close'].iloc[-1] * q for s, q in portfolio.items())
-print(f"Portfolio Value: Rs.{total_value:,.2f}")
+# Get options data
+options = nf.derivatives.get_option_price_volume_data(
+    "NIFTY", "OPTIDX", "CE", period="1M"
+)
+
+# Get F&O bhav copy
+bhav = nf.derivatives.get_fno_bhav_copy("01-12-2024")
 ```
 
-### Strategy Backtesting
-
-```python
-import nsefeed as nf
-
-ticker = nf.Ticker("TATASTEEL")
-df = ticker.history(period="6mo")
-
-# Calculate moving averages
-df['SMA_20'] = df['close'].rolling(window=20).mean()
-df['SMA_50'] = df['close'].rolling(window=50).mean()
-
-# Generate signals
-df['signal'] = 0
-df.loc[df['SMA_20'] > df['SMA_50'], 'signal'] = 1   # Buy
-df.loc[df['SMA_20'] < df['SMA_50'], 'signal'] = -1  # Sell
-```
-
-## 🔧 Configuration
-
-```python
-import nsefeed as nf
-
-# Logging
-nf.set_log_level("INFO")
-nf.enable_debug()
-
-# Cache management
-nf.clear_cache()
-```
-
-Or use `.env` file:
-
-```bash
-NSEFEED_LOG_LEVEL=INFO
-NSEFEED_RATE_LIMIT=3.0
-NSEFEED_CACHE_DIR=
-```
-
-## 📚 API Reference
-
-### Core API
-
-- `Ticker(symbol)` - Access historical data for a symbol
-  - `.history(period, start, end, interval)` - Get OHLCV data
-  - `.info` - Company information
-
-- `download(tickers, period, start, end, interval)` - Batch download multiple tickers
-
-### Advanced Modules
-
-**Capital Market** (21 functions)
-- `get_quote()`, `get_bulk_deals()`, `get_block_deals()`, `get_market_status()`, `get_nifty50_list()`, and more
-
-**Derivatives** (11 functions)
-- `get_option_chain()`, `get_fno_quote()`, `get_future_price_volume()`, and more
-
-**Debt** (1 function)
-- `get_corporate_bond_trades()`
-
-> **Note**: Live API functions require NSE API access and may be rate-limited. Use `Ticker` class for reliable historical data.
-
-## 🧪 Testing
-
-```bash
-# Run comprehensive tests
-.\test.bat
-
-# Quick test
-python -c "import nsefeed as nf; print(nf.Ticker('RELIANCE').history(period='5d'))"
-```
-
-## ⚠️ Important Notes
-
-### Data Reliability
-
-✅ **Recommended**: `Ticker` class and `download()` - Fetch from official NSE bhav copies (highly reliable)
-
-⚡ **Advanced**: Live API functions in `capital_market`, `derivatives`, `debt` modules may be rate-limited or require additional authentication
-
-### Features
-
-- **Rate Limiting**: Automatic (3 requests/second default)
-- **Caching**: SQLite cache at `~/.nsefeed/cache.db`
-- **Type Safety**: Full type hints for IDE support
-
-## 🏗️ Architecture
+## 📊 Module Structure
 
 ```
 nsefeed/
-├── ticker.py           # Ticker class (yfinance-style)
-├── session.py          # NSE session management
-├── cache.py            # SQLite caching
-├── config.py           # Configuration
-├── scrapers/           # Bhav copy scrapers
-├── capital_market/     # Capital market data (21 functions)
-├── derivatives/        # Derivatives data (11 functions)
-└── debt/               # Debt market data (1 function)
+├── indices/          # Index data (NIFTY, sectoral, thematic indices)
+├── equity/           # Equity historical data, bulk/block deals
+├── derivatives/      # F&O historical data, bhav copy
+├── ticker.py         # yfinance-style Ticker class
+├── cache.py          # SQLite caching
+├── session.py        # NSE session management
+└── utils.py          # Utility functions
 ```
 
-## 🤝 Contributing
+## 🎯 Design Philosophy
 
-Contributions are welcome! This library aims to be the best NSE data source for the Python/trading community.
+nsefeed focuses on **reliable historical data** using CSV-based NSE endpoints:
 
-### Development Status
+- **Not a live market data library** - We focus on historical data from NSE archives
+- **CSV over JSON APIs** - More reliable and less prone to breaking changes
+- **Quality over quantity** - Only functions that work reliably
+- **Clean and minimal** - Following nselib's proven modular structure
+- **Familiar API** - yfinance-style interface for ease of use
 
-🚧 **Under Active Development** - Features and APIs may change. Core `Ticker` functionality is stable.
+## 📝 Available Data
 
-## 💰 Support This Project
+### Indices
+- ✅ Index constituent lists
+- ✅ Sectoral, thematic, and strategy indices listing
+- ⚠️ Historical OHLCV for indices (under development - NSE API deprecated)
+- ⚠️ India VIX historical data (under development - NSE API deprecated)
 
-If you find this project valuable, consider supporting its development:
+### Equity
+- Historical price, volume, and deliverable position data
+- Bulk deals and block deals
+- Short selling data
 
-<a href="https://www.buymeacoffee.com/shubhamnayak" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+### Derivatives
+- Futures price and volume data
+- Options price and volume data (CE/PE)
+- F&O bhav copy (end-of-day snapshots)
 
-**⚡ Built by [Shubham Nayak](https://linkedin.com/in/shubham-nayak-591375276)**
+## ⚠️ Known Limitations
 
-## 📄 License
+### Historical Index Data (Under Development)
 
-Apache License 2.0 - Copyright 2025 nsefeed developers
+**Functions affected:**
+- `nf.indices.index_data()` - Returns `NotImplementedError`
+- `nf.indices.india_vix_data()` - Returns `NotImplementedError`
 
-## 🙏 Acknowledgments
+**Reason:** NSE India has deprecated their historical index data API endpoints. These functions are under development as we work on alternative data sources.
 
-- Inspired by [yfinance](https://github.com/ranaroussi/yfinance) by Ran Aroussi
-- NSE India for providing public data
-- The Python trading community
+**Workaround:** Use constituent stocks to track index movement:
 
-## ⚖️ Disclaimer
+```python
+import nsefeed as nf
 
-This library is for educational and research purposes. Not affiliated with or endorsed by NSE India. Users are responsible for complying with NSE's terms of service. Always verify critical data with official NSE sources.
+# Get NIFTY 50 constituent stocks
+stocks = nf.indices.constituent_stock_list("BroadMarketIndices", "Nifty 50")
+
+# Fetch data for individual stocks
+for symbol in stocks['Symbol'][:10]:
+    df = nf.Ticker(symbol).history(period="1M")
+    print(f"{symbol}: {len(df)} days of data")
+```
+
+**Working functions:**
+- ✅ `nf.Ticker().history()` - Equity historical data (fully functional)
+- ✅ `nf.equity.*` - All equity functions (fully functional)
+- ✅ `nf.derivatives.*` - All derivatives functions (fully functional)
+- ✅ `nf.indices.constituent_stock_list()` - Index constituents (fully functional)
+- ✅ `nf.indices.index_list()` - List of indices (fully functional)
 
 ---
 
-<div align="left">
+## 🔧 Configuration
 
-**Made with ❤️ for the Indian trading community**
+Environment variables for customization (all optional):
 
-[Report Issues](https://github.com/nsefeed/nsefeed/issues) | [Documentation](COMPREHENSIVE_GUIDE.md)
+```bash
+# Logging
+NSEFEED_LOG_LEVEL=INFO        # DEBUG, INFO, WARNING, ERROR
+NSEFEED_LOG_FILE=nsefeed.log  # Optional log file path
 
-</div>
+# Rate limiting
+NSEFEED_RATE_LIMIT=3.0        # Requests per second
+NSEFEED_MIN_REQUEST_DELAY=0.35 # Minimum delay between requests
+
+# Cache
+NSEFEED_CACHE_DIR=~/.nsefeed  # Cache directory path
+```
+
+## 📖 Documentation
+
+For detailed documentation, see:
+- [RESTRUCTURE_PLAN.md](RESTRUCTURE_PLAN.md) - Architecture and design decisions
+- API documentation (coming soon)
+
+## 🤝 Contributing
+
+Contributions are welcome! This library is designed to be minimal and focused on reliable historical data from NSE.
+
+## 📄 License
+
+Apache License 2.0 - See [LICENSE](LICENSE) for details
+
+## 🙏 Acknowledgments
+
+- Inspired by [yfinance](https://github.com/ranaroussi/yfinance) for API design
+- Data sourced from [NSE India](https://www.nseindia.com)
+
+## ⚠️ Disclaimer
+
+This is an unofficial library. NSE India does not provide official APIs. This library uses publicly available data from NSE website and archives. Use at your own risk.
+
+---
+
+**Made with ❤️ for the Indian financial data community**

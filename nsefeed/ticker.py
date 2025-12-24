@@ -170,7 +170,11 @@ class Ticker:
         if start is not None or end is not None:
             # Use explicit dates
             start_date = parse_date(start) if start else None
-            end_date = parse_date(end) if end else date.today()
+            end_date = parse_date(end) if end else None
+
+            # Ensure end_date has a value
+            if end_date is None:
+                end_date = date.today()
 
             if start_date is None:
                 # Default to 1 month before end
