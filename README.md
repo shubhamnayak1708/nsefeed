@@ -169,23 +169,6 @@ for symbol in stocks['Symbol'][:10]:
 
 ---
 
-## 🔧 Configuration
-
-Environment variables for customization (all optional):
-
-```bash
-# Logging
-NSEFEED_LOG_LEVEL=INFO        # DEBUG, INFO, WARNING, ERROR
-NSEFEED_LOG_FILE=nsefeed.log  # Optional log file path
-
-# Rate limiting
-NSEFEED_RATE_LIMIT=3.0        # Requests per second
-NSEFEED_MIN_REQUEST_DELAY=0.35 # Minimum delay between requests
-
-# Cache
-NSEFEED_CACHE_DIR=~/.nsefeed  # Cache directory path
-```
-
 ## 📖 Documentation
 
 For detailed documentation, see:
