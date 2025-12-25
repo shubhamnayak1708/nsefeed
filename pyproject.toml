@@ -85,6 +85,13 @@ include = ["nsefeed*"]
 [tool.setuptools.package-data]
 nsefeed = ["data/*.json"]
 
+[tool.setuptools]
+include-package-data = true
+
+# Include README and logo files in distribution
+[tool.setuptools.exclude-package-data]
+"*" = ["test_*.py", "tmp.py", "research_*.py", "*_test.py"]
+
 [tool.black]
 line-length = 88
 target-version = ['py39', 'py310', 'py311', 'py312']

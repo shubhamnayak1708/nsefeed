@@ -143,10 +143,22 @@ cython_debug/
 # PyCharm
 .idea/
 
+# Claude AI
+.claude/
+.claud*/
+
 # nsefeed specific
 .nsefeed/
 *.db
 *.sqlite3
+
+# Test/temporary files
+test_*.py
+tmp.py
+research_*.py
+*_test.py
+PUBLISH_TO_PYPI.md
+FINAL_STATUS.md
 
 # macOS
 .DS_Store

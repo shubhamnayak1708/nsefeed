@@ -1,11 +1,17 @@
 # nsefeed
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/src/nsefeed-logo-dark.jpg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/src/nsefeed-logo-light.jpg">
+  <img alt="nsefeed logo" src="assets/src/nsefeed-logo-light.jpg" width="600">
+</picture>
+
 **Minimal, production-ready Python library for NSE India historical data**
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-A reliable NSE India API wrapper focused on historical data, inspired by [nselib](https://github.com/RuchiTanmay/nselib)'s clean structure and [yfinance](https://github.com/ranaroussi/yfinance)'s intuitive API design.
+A reliable NSE India API wrapper focused on historical data, inspired by [yfinance](https://github.com/ranaroussi/yfinance)'s intuitive API design.
 
 ---
 
