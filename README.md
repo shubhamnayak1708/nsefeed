@@ -177,13 +177,19 @@ for symbol in stocks['Symbol'][:10]:
 
 ## 📖 Documentation
 
-For detailed documentation, see:
-- [RESTRUCTURE_PLAN.md](RESTRUCTURE_PLAN.md) - Architecture and design decisions
 - API documentation (coming soon)
 
 ## 🤝 Contributing
 
 Contributions are welcome! This library is designed to be minimal and focused on reliable historical data from NSE.
+
+## 💰 **Support This Project**
+
+If you find this project valuable, consider supporting its development:
+
+<a href="https://www.buymeacoffee.com/shubhamnayak" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
+Your support helps us maintain and in doing R&D.
 
 ## 📄 License
 
