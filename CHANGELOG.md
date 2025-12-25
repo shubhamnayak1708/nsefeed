@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corporate actions (dividends, splits, bonuses)
 - Async bulk downloads
 
+## [1.0.1] - 2024-12-25
+
+### Added
+- Theme-aware logo in README (light/dark mode support)
+- Logo files included in package distribution (assets/src/)
+
+### Changed
+- Updated README with `<picture>` element for automatic theme switching
+- Package now includes logo assets for PyPI display
+
 ## [1.0.0] - 2024-12-24
 
 ### Added

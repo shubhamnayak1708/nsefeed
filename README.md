@@ -6,7 +6,7 @@
   <img alt="nsefeed logo" src="assets/src/nsefeed-logo-light.jpg" width="600">
 </picture>
 
-**Minimal, production-ready Python library for NSE India historical data**
+**Minimal python library for ingesting historical NSE India data historical data**
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)

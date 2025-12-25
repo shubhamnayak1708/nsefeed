@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nsefeed"
-version = "1.0.0"
-description = "Minimal, production-ready Python library for ingesting historical NSE India data - Indices, Equity, and Derivatives with yfinance-style API"
+version = "1.0.2"
+description = "Minimal python library for ingesting historical NSE India data - Indices, Equity, and Derivatives with yfinance-style API"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 authors = [

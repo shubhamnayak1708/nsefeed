@@ -47,7 +47,9 @@ For more information, visit:
 
 from __future__ import annotations
 
-__version__ = "1.0.0"
+import pandas as pd
+
+__version__ = "1.0.2"
 __author__ = "Shubham Nayak"
 __license__ = "Apache-2.0"
 
@@ -183,18 +185,28 @@ def download(
 
     # Determine date range
     if start is not None or end is not None:
-        from datetime import date as date_type
+        from datetime import date as date_type, timedelta
         start_date = parse_date(start) if start else None
         end_date = parse_date(end) if end else date_type.today()
 
         if start_date is None:
             # Default to 1 month before end
-            from datetime import timedelta
-            start_date = end_date - timedelta(days=30)
+            if end_date is not None:
+                start_date = end_date - timedelta(days=30)
+            else:
+                end_date = date_type.today()
+                start_date = end_date - timedelta(days=30)
     else:
         start_date, end_date = period_to_dates(period)
 
-    # Validate date range
+    # Validate date range (ensure both are not None)
+    if start_date is None or end_date is None:
+        from datetime import date as date_type, timedelta
+        if end_date is None:
+            end_date = date_type.today()
+        if start_date is None:
+            start_date = end_date - timedelta(days=30)
+    
     start_date, end_date = validate_date_range(start_date, end_date)
 
     logger.info(f"Downloading {len(tickers)} tickers: {start_date} to {end_date}")
